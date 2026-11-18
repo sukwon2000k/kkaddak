@@ -1,0 +1,5 @@
+{
+  "source": "Google MediaPipe hand_landmarker/float16/1",
+  "sha256": "fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1",
+  "package": "0.10.32"
+}

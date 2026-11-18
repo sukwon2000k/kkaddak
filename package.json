@@ -1,0 +1,29 @@
+{
+  "name": "kkaddak",
+  "version": "0.3.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "assets": "node scripts/prepare-assets.mjs && node scripts/build-vision.mjs",
+    "build": "tsc --noEmit && vite build",
+    "test": "node --import tsx --test packages/core/tests/*.test.ts",
+    "preview": "vite preview --host 0.0.0.0",
+    "predev": "node scripts/build-vision.mjs",
+    "prebuild": "node scripts/build-vision.mjs"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.32",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "lucide-react": "0.468.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.3.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.8",
+    "tsx": "4.21.0"
+  }
+}

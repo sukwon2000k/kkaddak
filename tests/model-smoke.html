@@ -1,0 +1,30 @@
+<!doctype html><html lang="ko"><meta charset="UTF-8"><title>KKADDAK 모델 연결 점검</title><body style="font-family:sans-serif;padding:40px"><h1>실제 모델 · Worker 연결 점검</h1><p>카메라 없이 빈 프레임을 처리합니다. 손 인식 정확도 시험이 아닙니다.</p><pre id="result">모델 준비 중…</pre><script type="module">
+// 실제 앱과 같은 Worker·WASM·모델을 사용해 초기화와 한 프레임 추론을 확인합니다.
+const worker = new Worker(new URL('/mediapipe/vision-worker.js',location.origin));
+const result=document.querySelector('#result');
+worker.onmessage=async({data})=>{
+ if(data.type==='ready'){
+   result.textContent='실제 손 모델 초기화 성공 · 빈 프레임 추론 중';
+   const c=document.createElement('canvas');c.width=640;c.height=480;
+   const ctx=c.getContext('2d');ctx.fillStyle='#eeeeee';ctx.fillRect(0,0,640,480);
+   const frame=await createImageBitmap(c);worker.postMessage({type:'frame',frame,at:performance.now()},[frame]);
+ }
+ if(data.type==='result'){result.textContent=`PASS · 실제 모델 초기화 및 Worker 추론 성공\n손 개수: ${data.hands.length}\n추론 시간: ${Math.round(data.duration)}ms\n빈 프레임이므로 인식 정확도 검증 결과가 아닙니다.`;worker.terminate();}
+ if(data.type==='error'){worker.terminate();await compatibility(data.message);}
+};
+worker.onerror=async e=>{worker.terminate();await compatibility(e.message);};
+async function compatibility(reason){
+ try{
+ result.textContent='Worker를 사용할 수 없어 호환 모드를 검사합니다.';
+ const {FilesetResolver,HandLandmarker}=await import('@mediapipe/tasks-vision');
+ const gl=document.createElement('canvas');gl.width=640;gl.height=480;
+ if(!gl.getContext('webgl2'))throw Error('이 환경은 WebGL2를 제공하지 않습니다. 실제 웹캠 기기에서 재검증이 필요합니다.');
+ const files=await FilesetResolver.forVisionTasks('/mediapipe/wasm');
+ const model=await HandLandmarker.createFromOptions(files,{canvas:gl,baseOptions:{modelAssetPath:'/mediapipe/hand_landmarker.task',delegate:'CPU'},runningMode:'VIDEO',numHands:2});
+ const c=document.createElement('canvas');c.width=640;c.height=480;c.getContext('2d').fillRect(0,0,640,480);
+ const r=model.detectForVideo(c,performance.now());model.close();
+ result.textContent='PASS · 호환 모드 실제 모델 추론 성공 · 손 '+r.landmarks.length+'개 (빈 프레임)';
+ }catch(e){result.textContent='검증 제한 · '+String(e)+'\nWorker: '+reason;}
+}
+worker.postMessage({type:'init',wasm:new URL('/mediapipe/wasm',location.origin).href,model:new URL('/mediapipe/hand_landmarker.task',location.origin).href});
+</script></body></html>
